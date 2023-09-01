@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ val listBullets = listOf(
 @Suppress("HardCodedStringLiteral")
 fun HtmlText(
     html: String,
+    baseUri: String,
     modifier: Modifier = Modifier,
     overflow: TextOverflow = TextOverflow.Clip,
     maxLines: Int = Int.MAX_VALUE,
@@ -98,6 +100,8 @@ fun HtmlText(
     val link = SpanStyle(textDecoration = TextDecoration.Underline, color = MaterialTheme.colors.primaryVariant)
     val monospace = SpanStyle(fontFamily = FontFamily.Monospace) // todo: doesn't work for some reason
     val colorBlockquote = MaterialTheme.colors.secondary
+
+    val doc = derivedStateOf { Jsoup.parse(html, baseUri) }
 
     val formattedString = remember(html) {
         buildAnnotatedString {
@@ -207,7 +211,7 @@ fun HtmlText(
                 ),
                 "a" to HtmlNode(
                     start = { node ->
-                        val href = node.attr("href")
+                        val href = node.attr("abs:href")
 
                         pushStringAnnotation("link", href)
                         pushStyle(link)
@@ -289,9 +293,7 @@ fun HtmlText(
                 ),
             )
 
-            val doc = Jsoup.parse(html)
-
-            doc.traverse(object : NodeVisitor {
+            doc.value.traverse(object : NodeVisitor {
                 override fun head(node: Node, depth: Int) {
                     when (node) {
                         is TextNode -> {

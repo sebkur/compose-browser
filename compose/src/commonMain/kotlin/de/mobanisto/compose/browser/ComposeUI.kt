@@ -39,7 +39,7 @@ import java.nio.charset.StandardCharsets
 
 fun openUrl(url: String, onResult: (String) -> Unit) {
     if (url.isBlank()) return
-    println("opening: $url")
+    println("opening: \"$url\"")
     try {
         URL(url).openStream().use {
             val data = it.readBytes()
@@ -51,7 +51,7 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
             <h2>Error</h2>
             <p>Unable to fetch the requested URL content.</p>
             <p>Error message: ${e.message}</p>
-            """.trimIndent()
+        """.trimIndent()
         onResult.invoke(message)
     }
 }
@@ -70,15 +70,23 @@ fun ComposeUI(
                 """.trimMargin()
         )
     }
+
+    val open = { newUrl: String ->
+        setUrl(newUrl)
+        openUrl(newUrl) { html -> setHtml(html) }
+    }
+
     Scaffold(
         modifier,
         topBar = {
-            UrlInput(url, setUrl) {
-                openUrl(url) { html -> setHtml(html) }
+            UrlInput(url, setUrl) { newUrl ->
+                open(newUrl)
             }
         }
     ) { padding ->
-        Content(padding, html)
+        Content(padding, html, url) { newUrl ->
+            open(newUrl)
+        }
     }
 }
 
@@ -114,7 +122,12 @@ private fun UrlInput(url: String, setUrl: (String) -> Unit, openUrl: (String) ->
 }
 
 @Composable
-private fun Content(padding: PaddingValues, html: String) {
+private fun Content(
+    padding: PaddingValues,
+    html: String,
+    baseUri: String,
+    onLinkClicked: (String) -> Unit
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize().padding(padding),
@@ -127,8 +140,8 @@ private fun Content(padding: PaddingValues, html: String) {
         SelectionContainer(
             modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(16.dp),
         ) {
-            HtmlText(html) {
-                println(it)
+            HtmlText(html, baseUri) {
+                onLinkClicked.invoke(it)
             }
         }
     }
