@@ -70,6 +70,7 @@ fun ComposeUI(
                 """.trimMargin()
         )
     }
+    val (status, setStatus) = remember { mutableStateOf("") }
 
     val open = { newUrl: String ->
         setUrl(newUrl)
@@ -82,11 +83,20 @@ fun ComposeUI(
             UrlInput(url, setUrl) { newUrl ->
                 open(newUrl)
             }
+        },
+        bottomBar = {
+            Text(status)
         }
     ) { padding ->
-        Content(padding, html, url) { newUrl ->
-            open(newUrl)
-        }
+        Content(
+            padding, html, url,
+            onLinkClicked = { newUrl ->
+                open(newUrl)
+            },
+            onLinkHover = { newUrl ->
+                setStatus(newUrl ?: "")
+            }
+        )
     }
 }
 
@@ -126,7 +136,8 @@ private fun Content(
     padding: PaddingValues,
     html: String,
     baseUri: String,
-    onLinkClicked: (String) -> Unit
+    onLinkHover: (String?) -> Unit,
+    onLinkClicked: (String) -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -140,9 +151,15 @@ private fun Content(
         SelectionContainer(
             modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(16.dp),
         ) {
-            HtmlText(html, baseUri) {
-                onLinkClicked.invoke(it)
-            }
+            HtmlText(
+                html, baseUri,
+                handleLink = {
+                    onLinkClicked(it)
+                },
+                hoverLink = {
+                    onLinkHover(it)
+                }
+            )
         }
     }
 }

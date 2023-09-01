@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.AnnotatedString
@@ -61,6 +62,7 @@ fun HtmlText(
     modifier: Modifier = Modifier,
     overflow: TextOverflow = TextOverflow.Clip,
     maxLines: Int = Int.MAX_VALUE,
+    hoverLink: (String?) -> Unit,
     handleLink: (String) -> Unit,
 ) {
 
@@ -329,20 +331,26 @@ fun HtmlText(
     var onDraw: DrawScope.() -> Unit by remember { mutableStateOf({}) }
     var lastLayoutResult: TextLayoutResult? by remember { mutableStateOf(null) }
 
+    val processLink = { event: PointerEvent, handler: (String?) -> Unit ->
+        val offset = lastLayoutResult?.getOffsetForPosition(event.changes.first().position) ?: 0
+        formattedString
+            .getStringAnnotations(tag = "link", start = offset, end = offset)
+            .firstOrNull()
+            .let { annotation ->
+                handler(annotation?.item)
+            }
+    }
+
     BasicText(
         text = formattedString,
         modifier = modifier
             .drawBehind { onDraw() }
             // workaround for https://github.com/JetBrains/compose-multiplatform/issues/1450
             // todo: when fixed, change to ClickableText and move logic to onClick parameter
-            .onPointerEvent(PointerEventType.Release) {
-                val offset = lastLayoutResult?.getOffsetForPosition(it.changes.first().position) ?: 0
-                formattedString
-                    .getStringAnnotations(tag = "link", start = offset, end = offset)
-                    .firstOrNull()
-                    ?.let { annotation ->
-                        handleLink(annotation.item)
-                    }
+            .onPointerEvent(PointerEventType.Release) { event ->
+                processLink(event) { it?.let { handleLink(it) } }
+            }.onPointerEvent(PointerEventType.Move) { event ->
+                processLink(event) { hoverLink(it) }
             },
         overflow = overflow,
         maxLines = maxLines,
