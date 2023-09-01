@@ -40,10 +40,19 @@ import java.nio.charset.StandardCharsets
 fun openUrl(url: String, onResult: (String) -> Unit) {
     if (url.isBlank()) return
     println("opening: $url")
-    URL(url).openStream().use {
-        val data = it.readBytes()
-        val html = data.toString(StandardCharsets.UTF_8)
-        onResult.invoke(html)
+    try {
+        URL(url).openStream().use {
+            val data = it.readBytes()
+            val html = data.toString(StandardCharsets.UTF_8)
+            onResult.invoke(html)
+        }
+    } catch (e: Throwable) {
+        val message = """
+            <h2>Error</h2>
+            <p>Unable to fetch the requested URL content.</p>
+            <p>Error message: ${e.message}</p>
+            """.trimIndent()
+        onResult.invoke(message)
     }
 }
 
@@ -58,14 +67,17 @@ fun ComposeUI(
             """
                 <h2>Welcome to Compose Browser</h2>
                 <p>Enter a URL above and start browsing the simple web.</p>
-            """.trimMargin()
+                """.trimMargin()
         )
     }
-    Scaffold(modifier, topBar = {
-        UrlInput(url, setUrl) {
-            openUrl(url) { html -> setHtml(html) }
+    Scaffold(
+        modifier,
+        topBar = {
+            UrlInput(url, setUrl) {
+                openUrl(url) { html -> setHtml(html) }
+            }
         }
-    }) { padding ->
+    ) { padding ->
         Content(padding, html)
     }
 }
