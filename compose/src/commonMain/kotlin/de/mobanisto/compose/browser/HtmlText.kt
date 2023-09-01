@@ -165,6 +165,7 @@ fun HtmlText(
             val em = HtmlNode(start = { pushStyle(italic) })
 
             fun pushHeader(style: TextStyle) {
+                ensureNewline()
                 pushStyle(style.toSpanStyle())
             }
 
