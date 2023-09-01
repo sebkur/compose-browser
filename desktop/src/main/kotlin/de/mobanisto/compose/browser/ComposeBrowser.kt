@@ -11,7 +11,7 @@ fun main() {
             title = "Compose Browser",
             icon = painterResource("compose-browser.png")
         ) {
-            ComposeUI(initialUrl = "https://mobanisto.com")
+            ComposeUI(initialUrl = "about:blank", presetUrlBar = "https://mobanisto.com")
         }
     }
 }

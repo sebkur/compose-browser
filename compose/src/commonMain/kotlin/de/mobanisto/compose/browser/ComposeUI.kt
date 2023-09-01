@@ -23,8 +23,11 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -42,11 +45,20 @@ import java.nio.charset.StandardCharsets
 fun openUrl(url: String, onResult: (String) -> Unit) {
     if (url.isBlank()) return
     println("opening: \"$url\"")
+    if (url == "about:blank") {
+        onResult(
+            """
+            <h2>Welcome to Compose Browser</h2>
+            <p>Enter a URL above and start browsing the simple web.</p>
+            """.trimMargin()
+        )
+        return
+    }
     try {
         URL(url).openStream().use {
             val data = it.readBytes()
             val html = data.toString(StandardCharsets.UTF_8)
-            onResult.invoke(html)
+            onResult(html)
         }
     } catch (e: Throwable) {
         val message = """
@@ -54,7 +66,7 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
             <p>Unable to fetch the requested URL content.</p>
             <p>Error message: ${e.message}</p>
         """.trimIndent()
-        onResult.invoke(message)
+        onResult(message)
     }
 }
 
@@ -62,29 +74,45 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
 fun ComposeUI(
     modifier: Modifier = Modifier,
     initialUrl: String,
+    presetUrlBar: String? = null,
 ) {
     val (url, setUrl) = remember { mutableStateOf(initialUrl) }
     val (html, setHtml) = remember {
-        mutableStateOf(
-            """
-                <h2>Welcome to Compose Browser</h2>
-                <p>Enter a URL above and start browsing the simple web.</p>
-                """.trimMargin()
-        )
+        mutableStateOf("")
     }
     val (status, setStatus) = remember { mutableStateOf("") }
+    val history = remember { History() }
 
-    val open = { newUrl: String ->
+    val open = { newUrl: String, addToHistory: Boolean ->
+        if (addToHistory) {
+            history.add(newUrl)
+        }
         setUrl(newUrl)
         openUrl(newUrl) { html -> setHtml(html) }
+    }
+
+    LaunchedEffect(true) {
+        open(initialUrl, true)
+        presetUrlBar?.let { setUrl(it) }
     }
 
     Scaffold(
         modifier,
         topBar = {
-            UrlInput(url, setUrl) { newUrl ->
-                open(newUrl)
-            }
+            AddressBar(
+                url, setUrl, history,
+                openUrl = { newUrl ->
+                    open(newUrl, true)
+                },
+                goBack = {
+                    val newUrl = history.goBack()
+                    open(newUrl, false)
+                },
+                goForward = {
+                    val newUrl = history.goForward()
+                    open(newUrl, false)
+                },
+            )
         },
         bottomBar = {
             Text(status)
@@ -93,7 +121,7 @@ fun ComposeUI(
         Content(
             padding, html, url,
             onLinkClicked = { newUrl ->
-                open(newUrl)
+                open(newUrl, true)
             },
             onLinkHover = { newUrl ->
                 setStatus(newUrl ?: "")
@@ -104,9 +132,32 @@ fun ComposeUI(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun UrlInput(url: String, setUrl: (String) -> Unit, openUrl: (String) -> Unit) {
+private fun AddressBar(
+    url: String,
+    setUrl: (String) -> Unit,
+    history: History,
+    openUrl: (String) -> Unit,
+    goBack: () -> Unit,
+    goForward: () -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(goBack, enabled = history.canGoBack()) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+            }
+            Button(goForward, enabled = history.canGoForward()) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+            }
             TextField(
                 url,
                 setUrl,

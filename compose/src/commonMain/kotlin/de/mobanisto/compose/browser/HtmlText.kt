@@ -385,18 +385,6 @@ fun HtmlText(
 private fun AnnotatedString.getStringAnnotations(tag: String) =
     getStringAnnotations(tag, 0, length)
 
-fun <E> ArrayDeque<E>.push(e: E) {
-    addLast(e)
-}
-
-fun <E> ArrayDeque<E>.pop(): E {
-    return removeLast()
-}
-
-fun <E> ArrayDeque<E>.top(): E {
-    return last()
-}
-
 fun ArrayDeque<Int>.incrementCurrent() {
     this[size - 1] = this[size - 1] + 1
 }
