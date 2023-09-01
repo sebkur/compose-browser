@@ -39,7 +39,10 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
-import java.net.URL
+import org.apache.hc.client5.http.classic.methods.HttpGet
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.http.HttpStatus
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 fun openUrl(url: String, onResult: (String) -> Unit) {
@@ -55,10 +58,26 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
         return
     }
     try {
-        URL(url).openStream().use {
-            val data = it.readBytes()
-            val html = data.toString(StandardCharsets.UTF_8)
-            onResult(html)
+        val client = HttpClientBuilder.create().build()
+        val request = HttpGet(url)
+        client.execute(request) { response ->
+            if (response.code == HttpStatus.SC_OK) {
+                val data = response.entity.content.use { input -> input.readBytes() }
+
+                val contentType = response.getHeader("content-type")?.value
+                val charset = getCharsetFromContentType(contentType)
+                val cs = charset?.let { Charset.forName(charset) } ?: StandardCharsets.UTF_8
+
+                val html = data.toString(cs)
+                onResult(html)
+            } else {
+                val message = """
+                    <h2>Error</h2>
+                    <p>Unable to fetch the requested URL content.</p>
+                    <p>Error code: ${response.code}</p>
+                """.trimIndent()
+                onResult(message)
+            }
         }
     } catch (e: Throwable) {
         val message = """

@@ -49,6 +49,7 @@ dependencies {
     linuxX64(compose.desktop.linux_x64)
     macosX64(compose.desktop.macos_x64)
     macosArm64(compose.desktop.macos_arm64)
+    implementation("ch.qos.logback:logback-classic:1.4.11")
 }
 
 val versionCode by extra("1.1.0")

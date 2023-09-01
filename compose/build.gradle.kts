@@ -1,5 +1,3 @@
-import org.jetbrains.compose.compose
-
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
@@ -20,6 +18,7 @@ kotlin {
                     exclude(group = "org.jetbrains.skiko", module = "skiko-awt-runtime-linux-x64")
                 }
                 implementation("org.jsoup:jsoup:1.16.1")
+                implementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
             }
         }
     }
