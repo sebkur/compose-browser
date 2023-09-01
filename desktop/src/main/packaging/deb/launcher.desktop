@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Compose Browser
+Comment=Compose Browser - a simple web browser
+Exec=/opt/compose-browser/bin/ComposeBrowser
+Icon=/opt/compose-browser/lib/ComposeBrowser.png
+Terminal=false
+Type=Application
+Categories=System;Utility
+MimeType=
