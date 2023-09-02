@@ -1,5 +1,7 @@
 package de.mobanisto.compose.browser
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -38,6 +41,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
@@ -89,6 +93,7 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ComposeUI(
     modifier: Modifier = Modifier,
@@ -110,27 +115,37 @@ fun ComposeUI(
         openUrl(newUrl) { html -> setHtml(html) }
     }
 
+    val goBack = {
+        val newUrl = history.goBack()
+        open(newUrl, false)
+    }
+
+    val goForward = {
+        val newUrl = history.goForward()
+        open(newUrl, false)
+    }
+
     LaunchedEffect(true) {
         open(initialUrl, true)
         presetUrlBar?.let { setUrl(it) }
     }
 
     Scaffold(
-        modifier,
+        // NOTE: PointerButton.Back and PointerButton.Forward use indexes 3 and 4
+        //   which does not seem to work on my machine and with my mouse :/
+        modifier.onClick(matcher = PointerMatcher.mouse(PointerButton(5))) {
+            goBack()
+        }.onClick(matcher = PointerMatcher.mouse(PointerButton(6))) {
+            goForward()
+        },
         topBar = {
             AddressBar(
                 url, setUrl, history,
                 openUrl = { newUrl ->
                     open(newUrl, true)
                 },
-                goBack = {
-                    val newUrl = history.goBack()
-                    open(newUrl, false)
-                },
-                goForward = {
-                    val newUrl = history.goForward()
-                    open(newUrl, false)
-                },
+                goBack = goBack,
+                goForward = goForward,
             )
         },
         bottomBar = {
