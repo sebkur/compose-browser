@@ -39,6 +39,12 @@ sourceSets {
             runtimeClasspath = currentOs
         }
     }
+    test {
+        java {
+            compileClasspath = currentOs
+            runtimeClasspath = currentOs
+        }
+    }
 }
 
 dependencies {
