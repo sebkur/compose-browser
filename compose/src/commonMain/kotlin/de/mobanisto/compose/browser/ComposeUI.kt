@@ -134,9 +134,9 @@ fun ComposeUI(
         // NOTE: PointerButton.Back and PointerButton.Forward use indexes 3 and 4
         //   which does not seem to work on my machine and with my mouse :/
         modifier.onClick(matcher = PointerMatcher.mouse(PointerButton(5))) {
-            goBack()
+            if (history.canGoBack()) goBack()
         }.onClick(matcher = PointerMatcher.mouse(PointerButton(6))) {
-            goForward()
+            if (history.canGoForward()) goForward()
         },
         topBar = {
             AddressBar(
