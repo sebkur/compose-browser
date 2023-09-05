@@ -25,12 +25,11 @@ fun getCharsetFromContentType(contentType: String?): String? {
     return null
 }
 
-private fun validateCharset(cs: String): String? {
-    var cs: String? = cs
-    if (cs == null || cs.length == 0) {
+private fun validateCharset(charset: String?): String? {
+    if (charset.isNullOrEmpty()) {
         return null
     }
-    cs = cs.trim { it <= ' ' }.replace("[\"']".toRegex(), "")
+    var cs: String = charset.trim { it <= ' ' }.replace("[\"']".toRegex(), "")
     try {
         if (Charset.isSupported(cs)) {
             return cs
