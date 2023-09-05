@@ -22,9 +22,9 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -192,9 +192,10 @@ private fun AddressBar(
                     modifier = Modifier.padding(end = 4.dp)
                 )
             }
-            TextField(
+            OutlinedTextField(
                 url,
                 setUrl,
+                singleLine = true,
                 placeholder = { Text("Type a URL") },
                 modifier = Modifier.weight(1f, true).onPreviewKeyEvent {
                     if (it.type == KeyEventType.KeyDown && it.key == Key.Enter) {
