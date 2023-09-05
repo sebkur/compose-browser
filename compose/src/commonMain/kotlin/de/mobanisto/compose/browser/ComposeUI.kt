@@ -43,15 +43,18 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
+import mu.KotlinLogging
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.apache.hc.core5.http.HttpStatus
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
+private val LOG = KotlinLogging.logger {}
+
 fun openUrl(url: String, onResult: (String) -> Unit) {
     if (url.isBlank()) return
-    println("opening: \"$url\"")
+    LOG.info { "opening: \"$url\"" }
     if (url == "about:blank") {
         onResult(
             """
