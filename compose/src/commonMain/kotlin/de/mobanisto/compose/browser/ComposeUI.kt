@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
@@ -33,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -43,6 +45,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
@@ -65,6 +69,7 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
         return
     }
     try {
+
         val client = HttpClientBuilder.create().build()
         val request = HttpGet(url)
         client.execute(request) { response ->
@@ -109,13 +114,23 @@ fun ComposeUI(
     }
     val (status, setStatus) = remember { mutableStateOf("") }
     val history = remember { History() }
+    val (loading, setLoading) = remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
 
     val open = { newUrl: String, addToHistory: Boolean ->
         if (addToHistory) {
             history.add(newUrl)
         }
         setUrl(newUrl)
-        openUrl(newUrl) { html -> setHtml(html) }
+        setLoading(true)
+        coroutineScope.launch(Dispatchers.IO) {
+            openUrl(newUrl) { html ->
+                setHtml(html)
+                setLoading(false)
+            }
+        }
+        Unit
     }
 
     val goBack = {
@@ -143,7 +158,7 @@ fun ComposeUI(
         },
         topBar = {
             AddressBar(
-                url, setUrl, history,
+                url, setUrl, history, loading,
                 openUrl = { newUrl ->
                     open(newUrl, true)
                 },
@@ -173,12 +188,13 @@ private fun AddressBar(
     url: String,
     setUrl: (String) -> Unit,
     history: History,
+    loading: Boolean,
     openUrl: (String) -> Unit,
     goBack: () -> Unit,
     goForward: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(goBack, enabled = history.canGoBack()) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
@@ -208,6 +224,11 @@ private fun AddressBar(
                     false
                 }
             )
+            if (loading) {
+                CircularProgressIndicator()
+            } else {
+                CircularProgressIndicator(1f)
+            }
             Button({ openUrl(url) }) {
                 Icon(
                     imageVector = Icons.Filled.Check,
