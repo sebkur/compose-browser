@@ -8,3 +8,9 @@ HTML.
 To run the browser, execute this:
 
     ./gradlew pinpitRun
+
+## License
+
+This project is released under the terms of the GNU General Public License.
+
+See  [LICENSE.md](LICENSE.md) for details.

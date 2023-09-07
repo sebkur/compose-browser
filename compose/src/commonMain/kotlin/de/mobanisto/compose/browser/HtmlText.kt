@@ -1,3 +1,20 @@
+// Copyright 2023 Sebastian Kuerten
+//
+// This file is part of compose-browser.
+//
+// compose-browser is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// compose-browser is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with compose-browser. If not, see <http://www.gnu.org/licenses/>.
+
 package de.mobanisto.compose.browser
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -41,6 +58,9 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import org.jsoup.select.NodeVisitor
+
+// This file is adapted from briar-desktop's version (https://github.com/briar/briar-desktop)
+// which is in turn inspired by https://github.com/jeremyrempel/yahnapp (HtmlText.kt)
 
 enum class ListType {
     ORDERED,
