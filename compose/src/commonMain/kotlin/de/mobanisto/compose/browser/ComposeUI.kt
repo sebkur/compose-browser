@@ -87,7 +87,8 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
     }
     try {
 
-        val client = HttpClientBuilder.create().build()
+        val client = HttpClientBuilder.create()
+            .setUserAgent("Compose Browser/0.0.1").build()
         val request = HttpGet(url)
         client.execute(request) { response ->
             if (response.code == HttpStatus.SC_OK) {
