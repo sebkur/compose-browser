@@ -80,9 +80,10 @@ import java.nio.charset.StandardCharsets
 private val LOG = KotlinLogging.logger {}
 
 fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Unit) {
-    if (url.isBlank()) return
-    LOG.info { "opening: \"$url\"" }
-    if (url == "about:blank") {
+    if (url.isNotBlank()) {
+        LOG.info { "opening: \"$url\"" }
+    }
+    if (url.isBlank() || url == "about:blank") {
         onResult(
             """
             <h2>Welcome to Compose Browser</h2>
