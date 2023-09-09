@@ -41,6 +41,7 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -48,8 +49,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -250,38 +254,43 @@ fun ComposeUI(
         presetUrlBar?.let { setUrl(it) }
     }
 
-    Scaffold(
-        // NOTE: PointerButton.Back and PointerButton.Forward use indexes 3 and 4
-        //   which does not seem to work on my machine and with my mouse :/
-        modifier.onClick(matcher = PointerMatcher.mouse(PointerButton(5))) {
-            if (history.canGoBack()) goBack()
-        }.onClick(matcher = PointerMatcher.mouse(PointerButton(6))) {
-            if (history.canGoForward()) goForward()
-        },
-        topBar = {
-            AddressBar(
-                url, setUrl, history, loading,
-                openUrl = { newUrl ->
+    val dark = remember { mutableStateOf(false) }
+
+    MaterialTheme(colors = if (dark.value) DarkColors else LightColors) {
+        Scaffold(
+            // NOTE: PointerButton.Back and PointerButton.Forward use indexes 3 and 4
+            //   which does not seem to work on my machine and with my mouse :/
+            modifier.onClick(matcher = PointerMatcher.mouse(PointerButton(5))) {
+                if (history.canGoBack()) goBack()
+            }.onClick(matcher = PointerMatcher.mouse(PointerButton(6))) {
+                if (history.canGoForward()) goForward()
+            },
+            topBar = {
+                AddressBar(
+                    url, setUrl, history, loading,
+                    openUrl = { newUrl ->
+                        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
+                    },
+                    dark = dark,
+                    goBack = goBack,
+                    goForward = goForward,
+                )
+            },
+            bottomBar = {
+                Text(status)
+            }
+        ) { padding ->
+            Content(
+                padding, html, url,
+                onLinkClicked = { newUrl ->
                     open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
                 },
-                goBack = goBack,
-                goForward = goForward,
+                onLinkHover = { newUrl ->
+                    setStatus(newUrl ?: "")
+                },
+                scrollState = scrollState
             )
-        },
-        bottomBar = {
-            Text(status)
         }
-    ) { padding ->
-        Content(
-            padding, html, url,
-            onLinkClicked = { newUrl ->
-                open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
-            },
-            onLinkHover = { newUrl ->
-                setStatus(newUrl ?: "")
-            },
-            scrollState = scrollState
-        )
     }
 }
 
@@ -292,6 +301,7 @@ private fun AddressBar(
     setUrl: (String) -> Unit,
     history: History,
     loading: Boolean,
+    dark: MutableState<Boolean>,
     openUrl: (String) -> Unit,
     goBack: () -> Unit,
     goForward: () -> Unit
@@ -340,6 +350,13 @@ private fun AddressBar(
                     modifier = Modifier.padding(end = 4.dp)
                 )
                 Text("Browse")
+            }
+            Button({ dark.value = !dark.value }) {
+                Icon(
+                    imageVector = if (dark.value) Icons.Filled.DarkMode else Icons.Filled.LightMode,
+                    contentDescription = null,
+                    tint = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+                )
             }
         }
         Divider()
