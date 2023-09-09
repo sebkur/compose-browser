@@ -48,8 +48,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.KeyboardReturn
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -344,7 +344,7 @@ private fun AddressBar(
             }
             Button({ openUrl(url) }) {
                 Icon(
-                    imageVector = Icons.Filled.Check,
+                    imageVector = Icons.Filled.KeyboardReturn,
                     contentDescription = null,
                     tint = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
                     modifier = Modifier.padding(end = 4.dp)
