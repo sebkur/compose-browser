@@ -256,7 +256,10 @@ fun ComposeUI(
 
     val dark = remember { mutableStateOf(false) }
 
-    MaterialTheme(colors = if (dark.value) DarkColors else LightColors) {
+    MaterialTheme(
+        typography = CustomTypography,
+        colors = if (dark.value) DarkColors else LightColors,
+    ) {
         Scaffold(
             // NOTE: PointerButton.Back and PointerButton.Forward use indexes 3 and 4
             //   which does not seem to work on my machine and with my mouse :/
