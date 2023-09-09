@@ -62,6 +62,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
@@ -69,6 +70,8 @@ import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.apache.hc.core5.http.ClassicHttpResponse
 import org.apache.hc.core5.http.HttpStatus
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
@@ -137,6 +140,58 @@ fun showResult(response: ClassicHttpResponse, onResult: (String) -> Unit) {
     onResult(html)
 }
 
+fun open(
+    history: History,
+    setUrl: (String) -> Unit,
+    setLoading: (Boolean) -> Unit,
+    coroutineScope: CoroutineScope,
+    setHtml: (String) -> Unit,
+    newUrl: String,
+    addToHistory: Boolean
+) {
+    if (addToHistory) {
+        history.add(newUrl)
+    }
+    setUrl(newUrl)
+    setLoading(true)
+    coroutineScope.launch(Dispatchers.IO) {
+        openUrl(
+            newUrl,
+            onResult = { html ->
+                val doc = Jsoup.parse(html)
+                handleMetaRedirects(history, setUrl, setLoading, coroutineScope, setHtml, doc)
+                setHtml(html)
+                setLoading(false)
+            },
+            onRedirect = { location ->
+                LOG.info { "redirecting to $location" }
+                open(history, setUrl, setLoading, coroutineScope, setHtml, location, false)
+            }
+        )
+    }
+    Unit
+}
+
+fun handleMetaRedirects(
+    history: History,
+    setUrl: (String) -> Unit,
+    setLoading: (Boolean) -> Unit,
+    coroutineScope: CoroutineScope,
+    setHtml: (String) -> Unit,
+    doc: Document
+) {
+    val meta = doc.getElementsByTag("meta")
+    val refresh = meta.firstOrNull { m -> m.attr("http-equiv").lowercase() == "refresh" }
+    if (refresh != null) {
+        val values = refresh.attr("content").lowercase().split(";")
+        if (values.size > 1 && values[1].startsWith("url=")) {
+            val location = values[1].removePrefix("url=")
+            LOG.info { "redirecting to $location" }
+            open(history, setUrl, setLoading, coroutineScope, setHtml, location, false)
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ComposeUI(
@@ -145,49 +200,27 @@ fun ComposeUI(
     presetUrlBar: String? = null,
 ) {
     val (url, setUrl) = remember { mutableStateOf(initialUrl) }
+    val (status, setStatus) = remember { mutableStateOf("") }
     val (html, setHtml) = remember {
         mutableStateOf("")
     }
-    val (status, setStatus) = remember { mutableStateOf("") }
     val history = remember { History() }
     val (loading, setLoading) = remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
-    fun open(newUrl: String, addToHistory: Boolean) {
-        if (addToHistory) {
-            history.add(newUrl)
-        }
-        setUrl(newUrl)
-        setLoading(true)
-        coroutineScope.launch(Dispatchers.IO) {
-            openUrl(
-                newUrl,
-                onResult = { html ->
-                    setHtml(html)
-                    setLoading(false)
-                },
-                onRedirect = { location ->
-                    LOG.info { "redirecting to $location" }
-                    open(location, false)
-                }
-            )
-        }
-        Unit
-    }
-
     val goBack = {
         val newUrl = history.goBack()
-        open(newUrl, false)
+        open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, false)
     }
 
     val goForward = {
         val newUrl = history.goForward()
-        open(newUrl, false)
+        open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, false)
     }
 
     LaunchedEffect(true) {
-        open(initialUrl, true)
+        open(history, setUrl, setLoading, coroutineScope, setHtml, initialUrl, true)
         presetUrlBar?.let { setUrl(it) }
     }
 
@@ -203,7 +236,7 @@ fun ComposeUI(
             AddressBar(
                 url, setUrl, history, loading,
                 openUrl = { newUrl ->
-                    open(newUrl, true)
+                    open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, true)
                 },
                 goBack = goBack,
                 goForward = goForward,
@@ -216,7 +249,7 @@ fun ComposeUI(
         Content(
             padding, html, url,
             onLinkClicked = { newUrl ->
-                open(newUrl, true)
+                open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, true)
             },
             onLinkHover = { newUrl ->
                 setStatus(newUrl ?: "")
