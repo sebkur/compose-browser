@@ -72,6 +72,7 @@ import org.apache.hc.core5.http.ClassicHttpResponse
 import org.apache.hc.core5.http.HttpStatus
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
@@ -85,6 +86,20 @@ fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Uni
             """
             <h2>Welcome to Compose Browser</h2>
             <p>Enter a URL above and start browsing the simple web.</p>
+            """.trimMargin()
+        )
+        return
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        val encoded = URLEncoder.encode(url, "UTF-8")
+        onResult(
+            """
+            <h2>What now?</h2>
+            <p>Do you want to search '$url' on one of these search engines?</p>
+            <ul>
+            <li><a href="https://html.duckduckgo.com/html/?q=$encoded">DuckDuckGo</a></li>
+            <li><a href="https://www.startpage.com/search?q=$encoded">StartPage</a></li>
+            </ul>
             """.trimMargin()
         )
         return
