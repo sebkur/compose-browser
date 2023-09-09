@@ -67,13 +67,14 @@ import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.http.ClassicHttpResponse
 import org.apache.hc.core5.http.HttpStatus
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
 private val LOG = KotlinLogging.logger {}
 
-fun openUrl(url: String, onResult: (String) -> Unit) {
+fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Unit) {
     if (url.isBlank()) return
     LOG.info { "opening: \"$url\"" }
     if (url == "about:blank") {
@@ -86,27 +87,33 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
         return
     }
     try {
-
         val client = HttpClientBuilder.create()
-            .setUserAgent("Compose Browser/0.0.1").build()
+            .setUserAgent("Compose Browser/0.0.1").disableRedirectHandling().build()
         val request = HttpGet(url)
         client.execute(request) { response ->
-            if (response.code == HttpStatus.SC_OK) {
-                val data = response.entity.content.use { input -> input.readBytes() }
+            println(response.code)
+            when (response.code) {
+                HttpStatus.SC_OK -> {
+                    showResult(response, onResult)
+                }
 
-                val contentType = response.getHeader("content-type")?.value
-                val charset = getCharsetFromContentType(contentType)
-                val cs = charset?.let { Charset.forName(charset) } ?: StandardCharsets.UTF_8
+                HttpStatus.SC_MOVED_PERMANENTLY, HttpStatus.SC_MOVED_TEMPORARILY -> {
+                    val location = response.getFirstHeader("location")?.value
+                    if (location != null) {
+                        onRedirect(location)
+                    } else {
+                        showResult(response, onResult)
+                    }
+                }
 
-                val html = data.toString(cs)
-                onResult(html)
-            } else {
-                val message = """
-                    <h2>Error</h2>
-                    <p>Unable to fetch the requested URL content.</p>
-                    <p>Error code: ${response.code}</p>
-                """.trimIndent()
-                onResult(message)
+                else -> {
+                    val message = """
+                            <h2>Error</h2>
+                            <p>Unable to fetch the requested URL content.</p>
+                            <p>Error code: ${response.code}</p>
+                    """.trimIndent()
+                    onResult(message)
+                }
             }
         }
     } catch (e: Throwable) {
@@ -119,7 +126,18 @@ fun openUrl(url: String, onResult: (String) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+fun showResult(response: ClassicHttpResponse, onResult: (String) -> Unit) {
+    val data = response.entity.content.use { input -> input.readBytes() }
+
+    val contentType = response.getFirstHeader("content-type")?.value
+    val charset = getCharsetFromContentType(contentType)
+    val cs = charset?.let { Charset.forName(charset) } ?: StandardCharsets.UTF_8
+
+    val html = data.toString(cs)
+    onResult(html)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ComposeUI(
     modifier: Modifier = Modifier,
@@ -136,17 +154,24 @@ fun ComposeUI(
 
     val coroutineScope = rememberCoroutineScope()
 
-    val open = { newUrl: String, addToHistory: Boolean ->
+    fun open(newUrl: String, addToHistory: Boolean) {
         if (addToHistory) {
             history.add(newUrl)
         }
         setUrl(newUrl)
         setLoading(true)
         coroutineScope.launch(Dispatchers.IO) {
-            openUrl(newUrl) { html ->
-                setHtml(html)
-                setLoading(false)
-            }
+            openUrl(
+                newUrl,
+                onResult = { html ->
+                    setHtml(html)
+                    setLoading(false)
+                },
+                onRedirect = { location ->
+                    LOG.info { "redirecting to $location" }
+                    open(location, false)
+                }
+            )
         }
         Unit
     }
