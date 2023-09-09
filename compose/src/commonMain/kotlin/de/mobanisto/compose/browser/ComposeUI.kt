@@ -19,6 +19,7 @@ package de.mobanisto.compose.browser
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -222,20 +223,29 @@ fun ComposeUI(
     val history = remember { History() }
     val (loading, setLoading) = remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     val coroutineScope = rememberCoroutineScope()
+
+    val setHtmlAndScrollToTop: (String) -> Unit = {
+        setHtml(it)
+        coroutineScope.launch {
+            scrollState.scrollTo(0)
+        }
+    }
 
     val goBack = {
         val newUrl = history.goBack()
-        open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, false)
+        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
     }
 
     val goForward = {
         val newUrl = history.goForward()
-        open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, false)
+        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
     }
 
     LaunchedEffect(true) {
-        open(history, setUrl, setLoading, coroutineScope, setHtml, initialUrl, true)
+        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, initialUrl, true)
         presetUrlBar?.let { setUrl(it) }
     }
 
@@ -251,7 +261,7 @@ fun ComposeUI(
             AddressBar(
                 url, setUrl, history, loading,
                 openUrl = { newUrl ->
-                    open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, true)
+                    open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
                 },
                 goBack = goBack,
                 goForward = goForward,
@@ -264,11 +274,12 @@ fun ComposeUI(
         Content(
             padding, html, url,
             onLinkClicked = { newUrl ->
-                open(history, setUrl, setLoading, coroutineScope, setHtml, newUrl, true)
+                open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
             },
             onLinkHover = { newUrl ->
                 setStatus(newUrl ?: "")
-            }
+            },
+            scrollState = scrollState
         )
     }
 }
@@ -341,12 +352,12 @@ private fun Content(
     baseUri: String,
     onLinkHover: (String?) -> Unit,
     onLinkClicked: (String) -> Unit,
+    scrollState: ScrollState,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize().padding(padding),
     ) {
-        val scrollState = rememberScrollState()
         SelectionContainer(
             modifier = Modifier.fillMaxWidth().verticalScroll(scrollState).padding(16.dp),
         ) {
