@@ -83,7 +83,7 @@ import java.nio.charset.StandardCharsets
 
 private val LOG = KotlinLogging.logger {}
 
-fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Unit) {
+fun openUrl(versionInfo: VersionInfo, url: String, onResult: (String) -> Unit, onRedirect: (String) -> Unit) {
     if (url.isNotBlank()) {
         LOG.info { "opening: \"$url\"" }
     }
@@ -92,15 +92,27 @@ fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Uni
             """
             <h2>Welcome to Compose Browser</h2>
             <p>Enter a URL above and start browsing the simple web.</p>
+            <p>Or find out more about this software at <a href="about:credits">about:credits</a>.</p>
             """.trimMargin()
         )
-        return
-    }
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    } else if (url == "about:credits") {
+        onResult(
+            """
+            <h2>About Compose Browser ${versionInfo.version}</h2>
+            <p>This Browser is built using Compose for Desktop and is written in Kotlin.</p>
+            <p>I would like to thank:</p>
+            <ul>
+              <li>jeremyrempel
+              <li>ialokim
+            </ul>
+            """.trimMargin()
+        )
+    } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
         val encoded = URLEncoder.encode(url, "UTF-8")
         onResult(
             """
             <h2>What now?</h2>
+            <p>The address your entered does not start with 'http://' or 'https://'.</p>
             <p>Do you want to search '$url' on one of these search engines?</p>
             <ul>
             <li><a href="https://html.duckduckgo.com/html/?q=$encoded">DuckDuckGo</a></li>
@@ -108,9 +120,7 @@ fun openUrl(url: String, onResult: (String) -> Unit, onRedirect: (String) -> Uni
             </ul>
             """.trimMargin()
         )
-        return
-    }
-    try {
+    } else try {
         val client = HttpClientBuilder.create()
             .setUserAgent("Compose Browser/0.0.1").disableRedirectHandling().build()
         val request = HttpGet(url)
@@ -162,6 +172,7 @@ fun showResult(response: ClassicHttpResponse, onResult: (String) -> Unit) {
 }
 
 fun open(
+    versionInfo: VersionInfo,
     history: History,
     setUrl: (String) -> Unit,
     setLoading: (Boolean) -> Unit,
@@ -177,16 +188,17 @@ fun open(
     setLoading(true)
     coroutineScope.launch(Dispatchers.IO) {
         openUrl(
+            versionInfo,
             newUrl,
             onResult = { html ->
                 val doc = Jsoup.parse(html)
-                handleMetaRedirects(history, setUrl, setLoading, coroutineScope, setHtml, doc)
+                handleMetaRedirects(versionInfo, history, setUrl, setLoading, coroutineScope, setHtml, doc)
                 setHtml(html)
                 setLoading(false)
             },
             onRedirect = { location ->
                 LOG.info { "redirecting to $location" }
-                open(history, setUrl, setLoading, coroutineScope, setHtml, location, false)
+                open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtml, location, false)
             }
         )
     }
@@ -194,6 +206,7 @@ fun open(
 }
 
 fun handleMetaRedirects(
+    versionInfo: VersionInfo,
     history: History,
     setUrl: (String) -> Unit,
     setLoading: (Boolean) -> Unit,
@@ -208,7 +221,7 @@ fun handleMetaRedirects(
         if (values.size > 1 && values[1].startsWith("url=")) {
             val location = values[1].removePrefix("url=")
             LOG.info { "redirecting to $location" }
-            open(history, setUrl, setLoading, coroutineScope, setHtml, location, false)
+            open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtml, location, false)
         }
     }
 }
@@ -216,6 +229,7 @@ fun handleMetaRedirects(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ComposeUI(
+    versionInfo: VersionInfo,
     modifier: Modifier = Modifier,
     initialUrl: String,
     presetUrlBar: String? = null,
@@ -241,16 +255,16 @@ fun ComposeUI(
 
     val goBack = {
         val newUrl = history.goBack()
-        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
+        open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
     }
 
     val goForward = {
         val newUrl = history.goForward()
-        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
+        open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, false)
     }
 
     LaunchedEffect(true) {
-        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, initialUrl, true)
+        open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, initialUrl, true)
         presetUrlBar?.let { setUrl(it) }
     }
 
@@ -272,7 +286,16 @@ fun ComposeUI(
                 AddressBar(
                     url, setUrl, history, loading,
                     openUrl = { newUrl ->
-                        open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
+                        open(
+                            versionInfo,
+                            history,
+                            setUrl,
+                            setLoading,
+                            coroutineScope,
+                            setHtmlAndScrollToTop,
+                            newUrl,
+                            true
+                        )
                     },
                     dark = dark,
                     goBack = goBack,
@@ -286,7 +309,7 @@ fun ComposeUI(
             Content(
                 padding, html, url,
                 onLinkClicked = { newUrl ->
-                    open(history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
+                    open(versionInfo, history, setUrl, setLoading, coroutineScope, setHtmlAndScrollToTop, newUrl, true)
                 },
                 onLinkHover = { newUrl ->
                     setStatus(newUrl ?: "")

@@ -29,6 +29,7 @@ fun main() {
     val density = SharedPreferences.getUIScale().toFloat()
     val version = Version.getVersion()
     println("Compose Browser version $version")
+    val versionInfo = VersionInfo(version)
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -38,7 +39,7 @@ fun main() {
             window.minimumSize = DensityDimension(800, 600, density)
             window.preferredSize = DensityDimension(800, 600, density)
             CompositionLocalProvider(LocalDensity provides Density(density)) {
-                ComposeUI(initialUrl = "about:blank")
+                ComposeUI(versionInfo, initialUrl = "about:blank")
             }
         }
     }
