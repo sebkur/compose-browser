@@ -27,6 +27,8 @@ import de.topobyte.shared.preferences.SharedPreferences
 
 fun main() {
     val density = SharedPreferences.getUIScale().toFloat()
+    val version = Version.getVersion()
+    println("Compose Browser version $version")
     application {
         Window(
             onCloseRequest = ::exitApplication,

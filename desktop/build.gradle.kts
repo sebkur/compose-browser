@@ -1,8 +1,14 @@
 plugins {
+    java
     kotlin("jvm")
     id("org.jetbrains.compose")
     id("de.mobanisto.pinpit")
     id("org.jlleitschuh.gradle.ktlint")
+    id("de.topobyte.version-access-gradle-plugin")
+}
+
+generateVersionAccessSource {
+    packageName = "de.mobanisto.compose.browser"
 }
 
 val attributeUsage = Attribute.of("org.gradle.usage", String::class.java)
@@ -41,8 +47,8 @@ sourceSets {
     }
     test {
         java {
-            compileClasspath = currentOs
-            runtimeClasspath = currentOs
+            compileClasspath += currentOs
+            runtimeClasspath += currentOs
         }
     }
 }
@@ -59,7 +65,8 @@ dependencies {
     implementation("de.topobyte:shared-preferences:0.0.1")
 }
 
-val versionCode by extra("1.1.0")
+val versionCode by extra("0.1.0")
+version = versionCode
 
 pinpit.desktop {
     application {
@@ -73,7 +80,7 @@ pinpit.desktop {
             packageVersion = versionCode
             description = "Compose Browser - a simple web browser"
             vendor = "Mobanisto"
-            copyright = "2022-2023 Mobanisto"
+            copyright = "2023 Mobanisto"
             licenseFile.set(project.file("src/main/packaging/LICENSE.txt"))
             linux {
                 packageName = "compose-browser"
