@@ -86,8 +86,8 @@ pinpit.desktop {
                 packageName = "compose-browser"
                 debMaintainer = "sebastian@mobanisto.de"
                 debPackageVersion = versionCode
-                appCategory = "comm"
-                menuGroup = "Network;Chat;InstantMessaging"
+                appCategory = "utils"
+                menuGroup = "Network;WebBrowser"
                 iconFile.set(project.file("src/main/packaging/deb/compose-browser.png"))
                 debPreInst.set(project.file("src/main/packaging/deb/preinst"))
                 debPostInst.set(project.file("src/main/packaging/deb/postinst"))
@@ -129,7 +129,7 @@ pinpit.desktop {
                 packageName = "Compose Browser"
                 iconFile.set(project.file("../artwork/compose-browser.icns"))
                 bundleID = "de.mobanisto.compose.browser"
-                appCategory = "public.app-category.social-networking"
+                appCategory = "public.app-category.productivity"
                 distributableArchive {
                     format = "zip"
                     arch = "x64"
