@@ -271,7 +271,7 @@ fun ComposeUI(
     val dark = remember { mutableStateOf(false) }
 
     MaterialTheme(
-        typography = CustomTypography,
+        typography = CustomTypography(FontName.NOTO), // TODO: make user-selectable
         colors = if (dark.value) DarkColors else LightColors,
     ) {
         Scaffold(
