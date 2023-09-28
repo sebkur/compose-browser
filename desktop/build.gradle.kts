@@ -111,7 +111,7 @@ pinpit.desktop {
                 dirChooser = true
                 shortcut = true
                 menuGroup = "Mobanisto"
-                upgradeUuid = "CB418F88-237B-45A0-93DD-6D158443A020"
+                upgradeUuid = "30B120EB-A9ED-46EB-9147-AFB5139F711D"
                 packageVersion = versionCode
                 iconFile.set(project.file("src/main/packaging/windows/compose-browser.ico"))
                 aumid = "Mobanisto.Compose.Browser"
