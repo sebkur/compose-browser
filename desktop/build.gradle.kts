@@ -82,6 +82,7 @@ pinpit.desktop {
             vendor = "Mobanisto"
             copyright = "2023 Mobanisto"
             licenseFile.set(project.file("src/main/packaging/LICENSE.txt"))
+            modules("java.naming")
             linux {
                 packageName = "compose-browser"
                 debMaintainer = "sebastian@mobanisto.de"
