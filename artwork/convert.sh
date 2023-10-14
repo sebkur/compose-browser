@@ -2,19 +2,18 @@
 
 set -ex
 
-inkscape -C -o banner.png banner.svg
-inkscape -C -o dialog.png dialog.svg
+pinpit create-image-assets-from-material-icon --input symbol.svg \
+    --output . --color-background 0x41c300 --size-symbol 0.6
 
-convert banner.png ../desktop/src/main/packaging/windows/banner.bmp
-convert dialog.png ../desktop/src/main/packaging/windows/dialog.bmp
+mv icon-192.png ../desktop/src/main/resources/compose-browser.png
 
-inkscape -C -o icon16.png -h 16 icon.svg
-inkscape -C -o icon32.png -h 32 icon.svg
-inkscape -C -o icon48.png -h 48 icon.svg
-inkscape -C -o icon192.png -h 192 icon.svg
-inkscape -C -o icon256.png -h 256 icon.svg
-convert icon16.png icon32.png icon48.png icon256.png ../desktop/src/main/packaging/windows/compose-browser.ico
+mkdir -p ../desktop/src/main/packaging/linux/
+mv icon-500.png ../desktop/src/main/packaging/linux/compose-browser.png
 
-inkscape -C -h 500 -o ../desktop/src/main/packaging/deb/compose-browser.png icon.svg
+mkdir -p ../desktop/src/main/packaging/windows/
+mv banner.bmp ../desktop/src/main/packaging/windows/
+mv dialog.bmp ../desktop/src/main/packaging/windows/
+mv icon.ico ../desktop/src/main/packaging/windows/compose-browser.ico
 
-cp icon192.png ../desktop/src/main/resources/compose-browser.png
+mkdir -p ../desktop/src/main/packaging/macos/
+mv icon.icns ../desktop/src/main/packaging/macos/compose-browser.icns

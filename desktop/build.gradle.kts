@@ -89,12 +89,12 @@ pinpit.desktop {
                 debPackageVersion = versionCode
                 appCategory = "utils"
                 menuGroup = "Network;WebBrowser"
-                iconFile.set(project.file("src/main/packaging/deb/compose-browser.png"))
-                debPreInst.set(project.file("src/main/packaging/deb/preinst"))
-                debPostInst.set(project.file("src/main/packaging/deb/postinst"))
-                debPreRm.set(project.file("src/main/packaging/deb/prerm"))
-                debCopyright.set(project.file("src/main/packaging/deb/copyright"))
-                debLauncher.set(project.file("src/main/packaging/deb/launcher.desktop"))
+                iconFile.set(project.file("src/main/packaging/linux/compose-browser.png"))
+                debPreInst.set(project.file("src/main/packaging/linux/deb/preinst"))
+                debPostInst.set(project.file("src/main/packaging/linux/deb/postinst"))
+                debPreRm.set(project.file("src/main/packaging/linux/deb/prerm"))
+                debCopyright.set(project.file("src/main/packaging/linux/deb/copyright"))
+                debLauncher.set(project.file("src/main/packaging/linux/deb/launcher.desktop"))
                 deb("UbuntuFocalX64") {
                     qualifier = "ubuntu-20.04"
                     arch = "x64"
@@ -128,7 +128,7 @@ pinpit.desktop {
             }
             macOS {
                 packageName = "Compose Browser"
-                iconFile.set(project.file("../artwork/compose-browser.icns"))
+                iconFile.set(project.file("src/main/packaging/macos/compose-browser.icns"))
                 bundleID = "de.mobanisto.compose.browser"
                 appCategory = "public.app-category.productivity"
                 distributableArchive {
