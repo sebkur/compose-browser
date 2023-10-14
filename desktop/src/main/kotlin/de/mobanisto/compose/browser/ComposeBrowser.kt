@@ -18,6 +18,7 @@
 package de.mobanisto.compose.browser
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Density
@@ -26,7 +27,8 @@ import androidx.compose.ui.window.application
 import de.topobyte.shared.preferences.SharedPreferences
 
 fun main() {
-    val density = SharedPreferences.getUIScale().toFloat()
+    val density = if (SharedPreferences.isUIScalePresent())
+        SharedPreferences.getUIScale().toFloat() else null
     val version = Version.getVersion()
     println("Compose Browser version $version")
     val versionInfo = VersionInfo(version)
@@ -38,7 +40,11 @@ fun main() {
         ) {
             window.minimumSize = DensityDimension(800, 600, density)
             window.preferredSize = DensityDimension(800, 600, density)
-            CompositionLocalProvider(LocalDensity provides Density(density)) {
+            val providers = mutableListOf<ProvidedValue<out Any>>()
+            if (density != null) {
+                providers.add(LocalDensity provides Density(density))
+            }
+            CompositionLocalProvider(*providers.toTypedArray()) {
                 ComposeUI(versionInfo, initialUrl = "about:blank")
             }
         }
