@@ -9,7 +9,7 @@ plugins {
 }
 
 tasks.wrapper {
-    gradleVersion = "7.6.1"
+    gradleVersion = "7.6.3"
 }
 
 subprojects {
