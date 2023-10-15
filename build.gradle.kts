@@ -15,7 +15,6 @@ tasks.wrapper {
 subprojects {
     repositories {
         maven("https://mvn.topobyte.de")
-        maven("https://mvn.slimjars.com")
         mavenCentral()
         google()
     }
